@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.fluffyluffs</groupId>
     <artifactId>http-Retriever4j</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>HTTPRetriever4J</name>
     <description>Simple HTTP retriever</description>
@@ -36,7 +36,7 @@
     <scm>
         <connection>scm:git:https://github.com/cbm64chris/${project.artifactId}.git</connection>
         <developerConnection>scm:git:https://github.com/cbm64chris/${project.artifactId}.git</developerConnection>
-        <tag>1.0.0</tag>
+        <tag>HEAD</tag>
         <url>https://github.com/cbm64chris/${project.artifactId}.git</url>
     </scm>
     
