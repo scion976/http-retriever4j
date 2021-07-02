@@ -24,14 +24,14 @@ public enum HttpRetrieverAuthorization {
     BEARER {
         @Override
         public char [] getAuthorization(String auth) {
-            return ("Bearer " + String.valueOf(Optional.ofNullable(auth).orElseThrow())).toCharArray();
+            return ("Bearer " + String.valueOf(Optional.ofNullable(auth).orElseThrow(() -> new IllegalStateException("Missing authentication")))).toCharArray();
         }
         
     },
     BASIC {
         @Override
-        public char [] getAuthorization(String auth) {          
-            return ("Basic " + new String(Base64.getEncoder().encodeToString(Optional.ofNullable(auth).orElseThrow().getBytes(StandardCharsets.UTF_8)))).toCharArray();
+        public char [] getAuthorization(String auth) {
+            return ("Basic " + encodeString(auth)).toCharArray();
         }
     };
     
@@ -42,4 +42,7 @@ public enum HttpRetrieverAuthorization {
      */
     public abstract char [] getAuthorization(String auth);
     
+    private static String encodeString(String auth) {
+         return Base64.getEncoder().encodeToString(Optional.ofNullable(auth).orElseThrow(() -> new IllegalStateException("Missing authentication")).getBytes(StandardCharsets.UTF_8));
+    }
 }

@@ -33,6 +33,7 @@ public class HttpRetrieverCriteria {
     private final ContentType acceptContentType;
     private final char[] authorization;
     private final String userAgent;
+    private final int retryLimit;
 
     private HttpRetrieverCriteria(char[] authorization,
              URL url,
@@ -40,7 +41,8 @@ public class HttpRetrieverCriteria {
              String body,
              ContentType bodyContentType,
              ContentType acceptContentType,
-             String userAgent) {
+             String userAgent,
+             int retryLimit) {
         this.authorization = authorization;
         this.url = url;
         this.hTTPMethod = hTTPMethod;
@@ -48,6 +50,7 @@ public class HttpRetrieverCriteria {
         this.bodyContentType = bodyContentType;
         this.acceptContentType = acceptContentType;
         this.userAgent = userAgent;
+        this.retryLimit = retryLimit;
     }
 
     /**
@@ -112,6 +115,10 @@ public class HttpRetrieverCriteria {
         return userAgent;
     }
 
+    public int getRetryLimit() {
+        return retryLimit;
+    }
+
     /**
      * HTTP Retriever Criteria Builder
      */
@@ -124,6 +131,7 @@ public class HttpRetrieverCriteria {
         private ContentType bodyContentType;
         private ContentType acceptContentType;
         private String userAgent;
+        private int retryLimit = 5;
 
         /**
          * Set authorization in UTF-8 Base64. Using {@link HttpRetrieverAuthorization}
@@ -203,6 +211,11 @@ public class HttpRetrieverCriteria {
             this.userAgent = userAgent;
             return this;
         }
+        
+        public HttpRetrieverCriteriaBuilder setRetryLimit(int retryLimit) {
+            this.retryLimit = retryLimit;
+            return this;
+        }
 
         /**
          * Build {@link HttpRetrieverCriteria}. May throw {@link NoSuchElementException} where a required element is missing.
@@ -216,7 +229,8 @@ public class HttpRetrieverCriteria {
                      body,
                      bodyContentType,
                      acceptContentType,
-                     validate(userAgent, "Mozilla/5.0 etc"));
+                     validate(userAgent, "Mozilla/5.0 etc"),
+                     retryLimit);
         }
 
         private <T> T validate(T criterionValue, String field) {
@@ -227,7 +241,9 @@ public class HttpRetrieverCriteria {
 
     public enum ContentType {
         JSON("application/json;charset=UTF-8"),
-        TEXT("text/html; charset=UTF-8");
+        TEXT("text/html; charset=UTF-8"),
+        XML("application/xml; charset=UTF-8");
+        
         //TODO add additional content types
 
         private final String contentType;
