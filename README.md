@@ -1,6 +1,6 @@
 ## HTTP-Retriever4J
 
-[![Build Status](https://travis-ci.org/cbm64chris/http-retriever4j.svg?branch=main)](https://travis-ci.org/cbm64chris/http-retriever4j)
+[![Build Status](https://travis-ci.com/cbm64chris/http-retriever4j.svg?branch=main)](https://travis-ci.com/cbm64chris/http-retriever4j)
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.fluffyluffs/http-retriever4j/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.fluffyluffs/http-retriever4j/)
 
 ### Description
