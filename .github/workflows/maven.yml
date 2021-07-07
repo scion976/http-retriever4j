@@ -15,8 +15,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Coverage Badge
-      uses: tj-actions/coverage-badge-py@v1.2
     - uses: actions/checkout@v2
     - name: Set up JDK 1.8
       uses: actions/setup-java@v2
