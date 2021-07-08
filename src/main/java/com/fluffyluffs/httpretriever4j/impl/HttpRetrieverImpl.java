@@ -25,9 +25,9 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -113,7 +113,10 @@ public class HttpRetrieverImpl implements HttpRetriever<HttpRetrieverCriteria> {
                                     , connection.getResponseMessage()
                                     , response.toString());
                     }
-
+                } catch(UnknownHostException ex) {
+                    success = true;
+                    LOGGER.atError().log(ex.getMessage(), ex);
+                    throw new RuntimeException(ex);
                 } finally {
                     connection.disconnect();
                 }
