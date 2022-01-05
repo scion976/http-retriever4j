@@ -18,255 +18,275 @@ package com.fluffyluffs.httpretriever4j;
 
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-/**
- * HTTP Retriever Criteria
- */
+/** HTTP Retriever Criteria */
 public class HttpRetrieverCriteria {
 
-    private final URL url;
-    private final HTTPMethod hTTPMethod;
-    private final String body;
-    private final ContentType bodyContentType;
-    private final ContentType acceptContentType;
-    private final char[] authorization;
-    private final String userAgent;
-    private final int retryLimit;
+  private final URL url;
+  private final HTTPMethod hTTPMethod;
+  private final String body;
+  private final ContentType bodyContentType;
+  private final ContentType acceptContentType;
+  private final List<Header> headers;
+  private final char[] authorization;
+  private final String userAgent;
+  private final int retryLimit;
 
-    private HttpRetrieverCriteria(char[] authorization,
-             URL url,
-             HTTPMethod hTTPMethod,
-             String body,
-             ContentType bodyContentType,
-             ContentType acceptContentType,
-             String userAgent,
-             int retryLimit) {
-        this.authorization = authorization;
-        this.url = url;
-        this.hTTPMethod = hTTPMethod;
-        this.body = body;
-        this.bodyContentType = bodyContentType;
-        this.acceptContentType = acceptContentType;
-        this.userAgent = userAgent;
-        this.retryLimit = retryLimit;
-    }
+  private HttpRetrieverCriteria(HttpRetrieverCriteriaBuilder httpRetrieverCriteriaBuilder) {
+    this.authorization = httpRetrieverCriteriaBuilder.authorization;
+    this.url = httpRetrieverCriteriaBuilder.url;
+    this.hTTPMethod = httpRetrieverCriteriaBuilder.hTTPMethod;
+    this.body = httpRetrieverCriteriaBuilder.body;
+    this.bodyContentType = httpRetrieverCriteriaBuilder.bodyContentType;
+    this.acceptContentType = httpRetrieverCriteriaBuilder.acceptContentType;
+    this.userAgent = httpRetrieverCriteriaBuilder.userAgent;
+    this.retryLimit = httpRetrieverCriteriaBuilder.retryLimit;
+    this.headers = httpRetrieverCriteriaBuilder.headers;
+  }
+
+  /**
+   * Get Authorisation
+   *
+   * @return {@link char[]}
+   */
+  public char[] getAuthorization() {
+    return authorization;
+  }
+
+  /**
+   * Get URL
+   *
+   * @return {@link URL}
+   */
+  public URL getUrl() {
+    return url;
+  }
+
+  /**
+   * Get HTTP Method
+   *
+   * @return {@link HTTPMethod}
+   */
+  public HTTPMethod gethTTPMethod() {
+    return hTTPMethod;
+  }
+
+  /**
+   * Get Body
+   *
+   * @return {@link String}
+   */
+  public String getBody() {
+    return body;
+  }
+
+  /**
+   * Get Body Content Type
+   *
+   * @return {@link ContentType}
+   */
+  public ContentType getBodyContentType() {
+    return bodyContentType;
+  }
+
+  /**
+   * Get Accepted Content Type
+   *
+   * @return {@link ContentType}
+   */
+  public ContentType getAcceptContentType() {
+    return acceptContentType;
+  }
+
+  /**
+   * Get User Agent
+   *
+   * @return {@link String}
+   */
+  public String getUserAgent() {
+    return userAgent;
+  }
+
+  /**
+   * Get the maximum number of times a request will be attempted
+   *
+   * @return {@link int}
+   */
+  public int getRetryLimit() {
+    return retryLimit;
+  }
+
+  /**
+   * Get the Headers to apply
+   *
+   * @return List of {@link Header}
+   */
+  public List<Header> getHeaders() {
+    return headers;
+  }
+
+  /** HTTP Retriever Criteria Builder */
+  public static class HttpRetrieverCriteriaBuilder {
+
+    private char[] authorization;
+    private URL url;
+    private HTTPMethod hTTPMethod;
+    private String body;
+    private ContentType bodyContentType;
+    private ContentType acceptContentType;
+    private String userAgent;
+    private int retryLimit = 5;
+    private List<Header> headers = new ArrayList<>();
 
     /**
-     * Get Authorisation
+     * Set authorization in UTF-8 Base64. Using {@link HttpRetrieverAuthorization}
      *
-     * @return {@link char[]}
-     */
-    public char[] getAuthorization() {
-        return authorization;
-    }
-
-    /**
-     * Get URL
+     * <pre>
+     *     DataRetrieverAuthorization.BASIC.setAuthorization(String.format("%s:%s", "user", "passwd"))
+     * </pre>
      *
-     * @return {@link URL}
+     * @param authorization {@link char[]}
+     * @return {@link HttpRetrieverCriteriaBuilder}
      */
-    public URL getUrl() {
-        return url;
+    public HttpRetrieverCriteriaBuilder setAuthorization(char[] authorization) {
+      this.authorization = authorization;
+      return this;
     }
 
     /**
-     * Get HTTP Method
+     * Set URL
      *
-     * @return {@link HTTPMethod}
+     * @param url {@link String}
+     * @return {@link HttpRetrieverCriteriaBuilder}
      */
-    public HTTPMethod gethTTPMethod() {
-        return hTTPMethod;
+    public HttpRetrieverCriteriaBuilder setURL(String url) {
+      try {
+        this.url = new URL(url);
+      } catch (MalformedURLException murlex) {
+        throw new RuntimeException(murlex);
+      }
+
+      return this;
     }
 
     /**
-     * Get Body
+     * Set HTTP Method
+     *
+     * @param hTTPMethod {@link HTTPMethod}
+     * @return {@link HttpRetrieverCriteriaBuilder}
+     */
+    public HttpRetrieverCriteriaBuilder setHTTPMethod(HTTPMethod hTTPMethod) {
+      this.hTTPMethod = hTTPMethod;
+      return this;
+    }
+
+    /**
+     * Set Body
+     *
+     * @param body {@link String}
+     * @return {@link HttpRetrieverCriteriaBuilder}
+     */
+    public HttpRetrieverCriteriaBuilder setBody(String body) {
+      this.body = body;
+      return this;
+    }
+
+    public HttpRetrieverCriteriaBuilder setHeader(Header header) {
+      headers.add(header);
+      return this;
+    }
+
+    /**
+     * Set Accepted Content Type
+     *
+     * @param acceptContentType {@link ContentType}
+     * @return {@link HttpRetrieverCriteriaBuilder}
+     */
+    public HttpRetrieverCriteriaBuilder setAcceptContentType(ContentType acceptContentType) {
+      this.acceptContentType = acceptContentType;
+      return this;
+    }
+
+    /**
+     * Set Body Content Type
+     *
+     * @param bodyContentType {@link ContentType}
+     * @return {@link HttpRetrieverCriteriaBuilder}
+     */
+    public HttpRetrieverCriteriaBuilder setBodyContentType(ContentType bodyContentType) {
+      this.bodyContentType = bodyContentType;
+      return this;
+    }
+
+    /**
+     * Set User Agent: https://developers.whatismybrowser.com/useragents/explore
+     *
+     * @param userAgent {@link String}
+     * @return {@link HttpRetrieverCriteriaBuilder}
+     */
+    public HttpRetrieverCriteriaBuilder setUserAgent(String userAgent) {
+      this.userAgent = userAgent;
+      return this;
+    }
+
+    public HttpRetrieverCriteriaBuilder setRetryLimit(int retryLimit) {
+      this.retryLimit = retryLimit;
+      return this;
+    }
+
+    /**
+     * Build {@link HttpRetrieverCriteria}. May throw {@link NoSuchElementException} where a
+     * required element is missing.
+     *
+     * @return
+     */
+    public HttpRetrieverCriteria build() {
+      validate(url, "URL");
+      validate(hTTPMethod, "HTTP Method GET, POST etc");
+      validate(userAgent, "Mozilla/5.0 etc");
+
+      return new HttpRetrieverCriteria(this);
+    }
+
+    private <T> T validate(T criterionValue, String field) {
+      return Optional.ofNullable(criterionValue)
+          .orElseThrow(
+              () -> new NoSuchElementException(String.format("Missing required %s.", field)));
+    }
+  }
+
+  public enum ContentType {
+    JSON("application/json;charset=UTF-8"),
+    TEXT("text/html; charset=UTF-8"),
+    XML("application/xml; charset=UTF-8");
+
+    // TODO add additional content types
+
+    private final String contentType;
+
+    private ContentType(String contentType) {
+      this.contentType = contentType;
+    }
+
+    /**
+     * Get Content Type
      *
      * @return {@link String}
      */
-    public String getBody() {
-        return body;
+    public String getContentType() {
+      return contentType;
     }
+  }
 
-    /**
-     * Get Body Content Type
-     *
-     * @return {@link ContentType}
-     */
-    public ContentType getBodyContentType() {
-        return bodyContentType;
-    }
-
-    /**
-     * Get Accepted Content Type
-     *
-     * @return {@link ContentType}
-     */
-    public ContentType getAcceptContentType() {
-        return acceptContentType;
-    }
-
-    /**
-     * Get User Agent
-     * @return {@link String}
-     */
-    public String getUserAgent() {
-        return userAgent;
-    }
-
-    public int getRetryLimit() {
-        return retryLimit;
-    }
-
-    /**
-     * HTTP Retriever Criteria Builder
-     */
-    public static class HttpRetrieverCriteriaBuilder {
-
-        private char[] authorization;
-        private URL url;
-        private HTTPMethod hTTPMethod;
-        private String body;
-        private ContentType bodyContentType;
-        private ContentType acceptContentType;
-        private String userAgent;
-        private int retryLimit = 5;
-
-        /**
-         * Set authorization in UTF-8 Base64. Using {@link HttpRetrieverAuthorization}
-         * <pre>
-         *     DataRetrieverAuthorization.BASIC.setAuthorization(String.format("%s:%s", "user", "passwd"))
-         * </pre>
-         *
-         * @param authorization {@link char[]}
-         * @return {@link HttpRetrieverCriteriaBuilder}
-         */
-        public HttpRetrieverCriteriaBuilder setAuthorization(char[] authorization) {
-            this.authorization = authorization;
-            return this;
-        }
-
-        /**
-         * Set URL
-         * @param url {@link String}
-         * @return {@link HttpRetrieverCriteriaBuilder}
-         */
-        public HttpRetrieverCriteriaBuilder setURL(String url) {
-            try {
-                this.url = new URL(url);
-            } catch (MalformedURLException murlex) {
-                throw new RuntimeException(murlex);
-            }
-
-            return this;
-        }
-
-        /**
-         * Set HTTP Method
-         * @param hTTPMethod {@link HTTPMethod}
-         * @return {@link HttpRetrieverCriteriaBuilder}
-         */
-        public HttpRetrieverCriteriaBuilder setHTTPMethod(HTTPMethod hTTPMethod) {
-            this.hTTPMethod = hTTPMethod;
-            return this;
-        }
-
-        /**
-         * Set Body
-         * @param body {@link String}
-         * @return {@link HttpRetrieverCriteriaBuilder}
-         */
-        public HttpRetrieverCriteriaBuilder setBody(String body) {
-            this.body = body;
-            return this;
-        }
-
-        /**
-         * Set Accepted Content Type
-         * @param acceptContentType {@link ContentType}
-         * @return {@link HttpRetrieverCriteriaBuilder}
-         */
-        public HttpRetrieverCriteriaBuilder setAcceptContentType(ContentType acceptContentType) {
-            this.acceptContentType = acceptContentType;
-            return this;
-        }
-
-        /**
-         * Set Body Content Type
-         * @param bodyContentType {@link ContentType}
-         * @return {@link HttpRetrieverCriteriaBuilder}
-         */
-        public HttpRetrieverCriteriaBuilder setBodyContentType(ContentType bodyContentType) {
-            this.bodyContentType = bodyContentType;
-            return this;
-        }
-
-        /**
-         * Set User Agent: https://developers.whatismybrowser.com/useragents/explore
-         * @param userAgent {@link String}
-         * @return {@link HttpRetrieverCriteriaBuilder}
-         */
-        public HttpRetrieverCriteriaBuilder setUserAgent(String userAgent) {
-            this.userAgent = userAgent;
-            return this;
-        }
-        
-        public HttpRetrieverCriteriaBuilder setRetryLimit(int retryLimit) {
-            this.retryLimit = retryLimit;
-            return this;
-        }
-
-        /**
-         * Build {@link HttpRetrieverCriteria}. May throw {@link NoSuchElementException} where a required element is missing.
-         * @return 
-         */
-        public HttpRetrieverCriteria build() {
-
-            return new HttpRetrieverCriteria(authorization,
-                     validate(url, "URL"),
-                     validate(hTTPMethod, "HTTP Method GET, POST etc"),
-                     body,
-                     bodyContentType,
-                     acceptContentType,
-                     validate(userAgent, "Mozilla/5.0 etc"),
-                     retryLimit);
-        }
-
-        private <T> T validate(T criterionValue, String field) {
-            return Optional.ofNullable(criterionValue).orElseThrow(()
-                    -> new NoSuchElementException(String.format("Missing required %s.", field)));
-        }
-    }
-
-    public enum ContentType {
-        JSON("application/json;charset=UTF-8"),
-        TEXT("text/html; charset=UTF-8"),
-        XML("application/xml; charset=UTF-8");
-        
-        //TODO add additional content types
-
-        private final String contentType;
-
-        private ContentType(String contentType) {
-            this.contentType = contentType;
-        }
-
-        /**
-         * Get Content Type
-         * @return {@link String}
-         */
-        public String getContentType() {
-            return contentType;
-        }
-
-    }
-
-    public enum HTTPMethod {
-        GET,
-        PUT,
-        DELETE,
-        TRACE,
-        POST;
-    }
+  public enum HTTPMethod {
+    GET,
+    PUT,
+    DELETE,
+    TRACE,
+    POST;
+  }
 }
