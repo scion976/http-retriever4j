@@ -53,7 +53,7 @@ public class HttpRetrieverCriteria {
       String urlWithParams = httpRetrieverCriteriaBuilder.url
               .concat(
                       queryParameters.stream()
-                      .map(queryParameter -> queryParameter.getField().concat(queryParameter.getValue()))
+                      .map(queryParameter -> queryParameter.getField() + "=" + queryParameter.getValue())
                       .collect(Collectors.collectingAndThen(
                               Collectors.joining("&"),
                               params -> ((params.isBlank() || httpRetrieverCriteriaBuilder.url.contains("?")) ? "" : "?").concat(params)))
