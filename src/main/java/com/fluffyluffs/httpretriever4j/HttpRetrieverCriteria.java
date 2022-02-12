@@ -56,7 +56,7 @@ public class HttpRetrieverCriteria {
                       .map(queryParameter -> queryParameter.getField() + "=" + queryParameter.getValue())
                       .collect(Collectors.collectingAndThen(
                               Collectors.joining("&"),
-                              params -> ((params.isBlank() || httpRetrieverCriteriaBuilder.url.contains("?")) ? "" : "?").concat(params)))
+                              params -> (params.isBlank() ? "" : "?").concat(params)))
               );
       this.url = new URL(urlWithParams);
     } catch (MalformedURLException murlex) {
