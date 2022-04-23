@@ -22,6 +22,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /** HTTP Retriever Criteria */
 public class HttpRetrieverCriteria {
@@ -32,13 +33,13 @@ public class HttpRetrieverCriteria {
   private final ContentType bodyContentType;
   private final ContentType acceptContentType;
   private final List<Header> headers;
+  private final List<QueryParameter> queryParameters;
   private final char[] authorization;
   private final String userAgent;
   private final int retryLimit;
 
   private HttpRetrieverCriteria(HttpRetrieverCriteriaBuilder httpRetrieverCriteriaBuilder) {
     this.authorization = httpRetrieverCriteriaBuilder.authorization;
-    this.url = httpRetrieverCriteriaBuilder.url;
     this.hTTPMethod = httpRetrieverCriteriaBuilder.hTTPMethod;
     this.body = httpRetrieverCriteriaBuilder.body;
     this.bodyContentType = httpRetrieverCriteriaBuilder.bodyContentType;
@@ -46,6 +47,23 @@ public class HttpRetrieverCriteria {
     this.userAgent = httpRetrieverCriteriaBuilder.userAgent;
     this.retryLimit = httpRetrieverCriteriaBuilder.retryLimit;
     this.headers = httpRetrieverCriteriaBuilder.headers;
+    this.queryParameters = httpRetrieverCriteriaBuilder.queryParameters;
+    
+    try {
+      String urlWithParams = httpRetrieverCriteriaBuilder.url
+              .concat(
+                      queryParameters.stream()
+                      .map(queryParameter -> queryParameter.getField() + "=" + queryParameter.getValue())
+                      .collect(Collectors.collectingAndThen(
+                              Collectors.joining("&"),
+                              params -> ((params.isBlank() || httpRetrieverCriteriaBuilder.url.contains("?")) ? "" : "?").concat(params)))
+              );
+      this.url = new URL(urlWithParams);
+    } catch (MalformedURLException murlex) {
+      throw new RuntimeException(murlex);
+    }
+
+    
   }
 
   /**
@@ -129,11 +147,21 @@ public class HttpRetrieverCriteria {
     return headers;
   }
 
+  /**
+   * Get the Query Parameters to apply
+   * @return List of {@link QueryParameter}
+   */
+  public List<QueryParameter> getQueryParameters() {
+    return queryParameters;
+  }
+
+  
+  
   /** HTTP Retriever Criteria Builder */
   public static class HttpRetrieverCriteriaBuilder {
 
     private char[] authorization;
-    private URL url;
+    private String url;
     private HTTPMethod hTTPMethod;
     private String body;
     private ContentType bodyContentType;
@@ -141,6 +169,7 @@ public class HttpRetrieverCriteria {
     private String userAgent;
     private int retryLimit = 5;
     private List<Header> headers = new ArrayList<>();
+    private List<QueryParameter> queryParameters = new ArrayList<>();
 
     /**
      * Set authorization in UTF-8 Base64. Using {@link HttpRetrieverAuthorization}
@@ -164,15 +193,10 @@ public class HttpRetrieverCriteria {
      * @return {@link HttpRetrieverCriteriaBuilder}
      */
     public HttpRetrieverCriteriaBuilder setURL(String url) {
-      try {
-        this.url = new URL(url);
-      } catch (MalformedURLException murlex) {
-        throw new RuntimeException(murlex);
-      }
-
+      this.url = url;
       return this;
     }
-
+    
     /**
      * Set HTTP Method
      *
@@ -200,6 +224,11 @@ public class HttpRetrieverCriteria {
       return this;
     }
 
+    public HttpRetrieverCriteriaBuilder setQueryParameter(QueryParameter queryParameter) {
+        queryParameters.add(queryParameter);
+        return this;
+    }
+    
     /**
      * Set Accepted Content Type
      *
@@ -248,6 +277,8 @@ public class HttpRetrieverCriteria {
       validate(url, "URL");
       validate(hTTPMethod, "HTTP Method GET, POST etc");
       validate(userAgent, "Mozilla/5.0 etc");
+      queryParameters.stream()
+              .forEach(queryParameter -> validate(queryParameter.getValue(), queryParameter.getField()));
 
       return new HttpRetrieverCriteria(this);
     }
