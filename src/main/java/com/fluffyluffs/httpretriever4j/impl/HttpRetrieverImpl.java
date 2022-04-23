@@ -29,12 +29,13 @@ import java.net.UnknownHostException;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class HttpRetrieverImpl implements HttpRetriever<HttpRetrieverCriteria> {
 
-  private static final Logger LOGGER = LogManager.getLogger(HttpRetrieverImpl.class);
+  private static final Logger LOGGER = Logger.getLogger(HttpRetrieverImpl.class.getName());
+
   private static final String AUTH = "Authorization";
   private static final String USER_AGENT = "User-Agent";
   private static final String ACCEPT = "Accept";
@@ -108,32 +109,36 @@ public class HttpRetrieverImpl implements HttpRetriever<HttpRetrieverCriteria> {
 
               break;
             case 204:
-              LOGGER.atInfo().log("Completed: {}", connection.getResponseCode());
+              LOGGER.log(Level.INFO, "Completed: {}", connection.getResponseCode());
               success = true;
 
               break;
             case 202:
               int retryLimit = criteria.getRetryLimit();
               if (retryCounter == retryLimit) {
-                LOGGER.atWarn().log("Reached retry limit of {} for {}, aborting.", retryLimit, url);
+                LOGGER.log(
+                    Level.WARNING,
+                    "Reached retry limit of {} for {}, aborting.",
+                    new Object[] {retryLimit, url});
                 success = true;
               }
-              LOGGER.atInfo().log(
+
+              LOGGER.log(
+                  Level.INFO,
                   "Status {}:{}, resubmitting {}.",
-                  connection.getResponseCode(),
-                  connection.getResponseMessage(),
-                  url);
+                  new Object[] {
+                    connection.getResponseCode(), connection.getResponseMessage(), url
+                  });
 
               break;
             case 404:
               success = true;
-              LOGGER
-                  .atError()
-                  .log(
-                      "Status {} for {}:{} - will not be reattempted.",
-                      url,
-                      connection.getResponseCode(),
-                      connection.getResponseMessage());
+              LOGGER.log(
+                  Level.WARNING,
+                  "Status {} for {}:{} - will not be reattempted.",
+                  new Object[] {
+                    url, connection.getResponseCode(), connection.getResponseMessage()
+                  });
 
               break;
             default:
@@ -145,23 +150,26 @@ public class HttpRetrieverImpl implements HttpRetriever<HttpRetrieverCriteria> {
                   response.append(outputString);
                 }
               }
-              LOGGER.atInfo().log(
+              LOGGER.log(
+                  Level.WARNING,
                   "Connection to {} returned an unhandled {}:{} and response body {} - will not be reattempted.",
-                  url,
-                  connection.getResponseCode(),
-                  connection.getResponseMessage(),
-                  response.toString());
+                  new Object[] {
+                    url,
+                    connection.getResponseCode(),
+                    connection.getResponseMessage(),
+                    response.toString()
+                  });
           }
         } catch (UnknownHostException ex) {
           success = true;
-          LOGGER.atError().log(ex.getMessage(), ex);
+          LOGGER.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
           throw new RuntimeException(ex);
         } finally {
           connection.disconnect();
         }
       } catch (IOException ex) {
         success = true;
-        LOGGER.atError().log(ex.getMessage(), ex);
+        LOGGER.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         throw new RuntimeException(ex);
       }
 
