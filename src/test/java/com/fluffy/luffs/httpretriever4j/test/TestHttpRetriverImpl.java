@@ -15,10 +15,9 @@
  */
 package com.fluffy.luffs.httpretriever4j.test;
 
-import static org.junit.Assert.assertTrue;
-
 import com.fluffyluffs.httpretriever4j.HttpRetriever;
 import com.fluffyluffs.httpretriever4j.HttpRetrieverCriteria;
+import com.fluffyluffs.httpretriever4j.Utils;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -27,6 +26,7 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import org.junit.Assert;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.BlockJUnit4ClassRunner;
@@ -42,224 +42,256 @@ import org.powermock.modules.junit4.PowerMockRunner;
 import org.powermock.modules.junit4.PowerMockRunnerDelegate;
 
 /**
- *
  * TestHttpRetriverImpl
  *
- * HttpURLConnection mocked with assistance of Stackoverflow
+ * <p>HttpURLConnection mocked with assistance of Stackoverflow
  * https://stackoverflow.com/a/40073597/1338769
  */
-@PowerMockIgnore({"javax.xml.*", "org.xml.*", "org.w3c.*", "javax.management.*"})
+@PowerMockIgnore({"com.sun.org.apache.xerces.*", "javax.xml.*", "org.xml.*", "javax.management.*"})
 @RunWith(PowerMockRunner.class)
 @PowerMockRunnerDelegate(BlockJUnit4ClassRunner.class)
 public class TestHttpRetriverImpl {
 
-    @Test
-    public void test_response_code_204_get() throws IOException, Exception {
+  @Test
+  public void test_response_code_204_get() throws IOException, Exception {
 
-        String responseString = "";
+    String responseString = "";
 
-        URL mockURL = mock(URL.class);
-        whenNew(URL.class).withArguments(anyString()).thenReturn(mockURL);
-        HttpURLConnection mockHttpURLConnection = Mockito.mock(HttpURLConnection.class);
-        when(mockURL.openConnection()).thenReturn(mockHttpURLConnection);
+    URL mockURL = mock(URL.class);
+    whenNew(URL.class).withArguments(anyString()).thenReturn(mockURL);
+    HttpURLConnection mockHttpURLConnection = Mockito.mock(HttpURLConnection.class);
+    when(mockURL.openConnection()).thenReturn(mockHttpURLConnection);
 
-        doNothing().when(mockHttpURLConnection).connect();
-        when(mockHttpURLConnection.getResponseCode()).thenReturn(204);
-        doReturn(new ByteArrayInputStream(responseString.getBytes("UTF-8"))).when(mockHttpURLConnection).getInputStream();
+    doNothing().when(mockHttpURLConnection).connect();
+    when(mockHttpURLConnection.getResponseCode()).thenReturn(204);
+    doReturn(new ByteArrayInputStream(responseString.getBytes("UTF-8")))
+        .when(mockHttpURLConnection)
+        .getInputStream();
 
-        HttpRetrieverCriteria mockHttpRetrieverCriteria = mock(HttpRetrieverCriteria.class);
-        whenNew(HttpRetrieverCriteria.class).withAnyArguments().thenReturn(mockHttpRetrieverCriteria);
-        when(mockHttpRetrieverCriteria.getUrl()).thenReturn(mockURL);
-        when(mockHttpRetrieverCriteria.getUserAgent()).thenReturn("Mozzila/5.0");
-        when(mockHttpRetrieverCriteria.gethTTPMethod()).thenReturn(HttpRetrieverCriteria.HTTPMethod.GET);
+    HttpRetrieverCriteria mockHttpRetrieverCriteria = mock(HttpRetrieverCriteria.class);
+    whenNew(HttpRetrieverCriteria.class).withAnyArguments().thenReturn(mockHttpRetrieverCriteria);
+    when(mockHttpRetrieverCriteria.getUrl()).thenReturn(mockURL);
+    when(mockHttpRetrieverCriteria.getUserAgent()).thenReturn("Mozzila/5.0");
+    when(mockHttpRetrieverCriteria.gethTTPMethod())
+        .thenReturn(HttpRetrieverCriteria.HTTPMethod.GET);
 
-        String urlResponse = HttpRetriever.Factory.create().retrieve(mockHttpRetrieverCriteria);
-        assertTrue(urlResponse.isEmpty());
-    }
+    String repsonse = new HttpRetriever(mockHttpRetrieverCriteria).retrieve(Utils::convertToString);
+    assertEquals(responseString, repsonse);
+  }
 
-    @Test
-    public void test_response_code_200_get() throws IOException, Exception {
+  @Test
+  public void test_response_code_200_get() throws IOException, Exception {
 
-        String responseString = "{\"name\": \"Cabbage\"}";
+    String responseString = "{\"name\": \"Cabbage\"}";
 
-        URL mockURL = mock(URL.class);
-        whenNew(URL.class).withArguments(anyString()).thenReturn(mockURL);
-        HttpURLConnection mockHttpURLConnection = Mockito.mock(HttpURLConnection.class);
-        when(mockURL.openConnection()).thenReturn(mockHttpURLConnection);
+    URL mockURL = mock(URL.class);
+    whenNew(URL.class).withArguments(anyString()).thenReturn(mockURL);
+    HttpURLConnection mockHttpURLConnection = Mockito.mock(HttpURLConnection.class);
+    when(mockURL.openConnection()).thenReturn(mockHttpURLConnection);
 
-        doNothing().when(mockHttpURLConnection).connect();
-        when(mockHttpURLConnection.getResponseCode()).thenReturn(200);
-        doReturn(new ByteArrayInputStream(responseString.getBytes("UTF-8"))).when(mockHttpURLConnection).getInputStream();
+    doNothing().when(mockHttpURLConnection).connect();
+    when(mockHttpURLConnection.getResponseCode()).thenReturn(200);
+    doReturn(new ByteArrayInputStream(responseString.getBytes("UTF-8")))
+        .when(mockHttpURLConnection)
+        .getInputStream();
 
-        HttpRetrieverCriteria mockHttpRetrieverCriteria = mock(HttpRetrieverCriteria.class);
-        whenNew(HttpRetrieverCriteria.class).withAnyArguments().thenReturn(mockHttpRetrieverCriteria);
-        when(mockHttpRetrieverCriteria.getUrl()).thenReturn(mockURL);
-        when(mockHttpRetrieverCriteria.getUserAgent()).thenReturn("Mozzila/5.0");
-        when(mockHttpRetrieverCriteria.gethTTPMethod()).thenReturn(HttpRetrieverCriteria.HTTPMethod.GET);
+    HttpRetrieverCriteria mockHttpRetrieverCriteria = mock(HttpRetrieverCriteria.class);
 
-        String urlResponse = HttpRetriever.Factory.create().retrieve(mockHttpRetrieverCriteria);
-        assertEquals(responseString, urlResponse);
-    }
+    whenNew(HttpRetrieverCriteria.class).withAnyArguments().thenReturn(mockHttpRetrieverCriteria);
+    when(mockHttpRetrieverCriteria.getUrl()).thenReturn(mockURL);
+    when(mockHttpRetrieverCriteria.getUserAgent()).thenReturn("Mozzila/5.0");
+    when(mockHttpRetrieverCriteria.gethTTPMethod())
+        .thenReturn(HttpRetrieverCriteria.HTTPMethod.GET);
 
-    @Test
-    public void test_response_code_202_get() throws IOException, Exception {
+    String repsonse = new HttpRetriever(mockHttpRetrieverCriteria).retrieve(Utils::convertToString);
+    assertEquals(responseString, repsonse);
+  }
 
-        String responseString = "{\"name\": \"Cabbage\"}";
+  @Test
+  public void test_response_code_202_get() throws IOException, Exception {
 
-        URL mockURL = mock(URL.class);
-        whenNew(URL.class).withArguments(anyString()).thenReturn(mockURL);
-        HttpURLConnection mockHttpURLConnection = Mockito.mock(HttpURLConnection.class);
-        when(mockURL.openConnection()).thenReturn(mockHttpURLConnection);
+    String responseString = "{\"name\": \"Cabbage\"}";
 
-        doNothing().when(mockHttpURLConnection).connect();
-        when(mockHttpURLConnection.getResponseCode()).thenReturn(202, 202, 200);
-        doReturn(new ByteArrayInputStream(responseString.getBytes("UTF-8"))).when(mockHttpURLConnection).getInputStream();
+    URL mockURL = mock(URL.class);
+    whenNew(URL.class).withArguments(anyString()).thenReturn(mockURL);
+    HttpURLConnection mockHttpURLConnection = Mockito.mock(HttpURLConnection.class);
+    when(mockURL.openConnection()).thenReturn(mockHttpURLConnection);
 
-        HttpRetrieverCriteria mockHttpRetrieverCriteria = mock(HttpRetrieverCriteria.class);
-        whenNew(HttpRetrieverCriteria.class).withAnyArguments().thenReturn(mockHttpRetrieverCriteria);
-        when(mockHttpRetrieverCriteria.getUrl()).thenReturn(mockURL);
-        when(mockHttpRetrieverCriteria.getUserAgent()).thenReturn("Mozzila/5.0");
-        when(mockHttpRetrieverCriteria.gethTTPMethod()).thenReturn(HttpRetrieverCriteria.HTTPMethod.GET);
+    doNothing().when(mockHttpURLConnection).connect();
+    when(mockHttpURLConnection.getResponseCode()).thenReturn(202, 202, 200);
+    doReturn(new ByteArrayInputStream(responseString.getBytes("UTF-8")))
+        .when(mockHttpURLConnection)
+        .getInputStream();
 
-        String urlResponse = HttpRetriever.Factory.create().retrieve(mockHttpRetrieverCriteria);
-        assertEquals(responseString, urlResponse);
-    }
+    HttpRetrieverCriteria mockHttpRetrieverCriteria = mock(HttpRetrieverCriteria.class);
 
-    @Test
-    public void test_response_code_202_get_retry() throws IOException, Exception {
+    whenNew(HttpRetrieverCriteria.class).withAnyArguments().thenReturn(mockHttpRetrieverCriteria);
+    when(mockHttpRetrieverCriteria.getUrl()).thenReturn(mockURL);
+    when(mockHttpRetrieverCriteria.getUserAgent()).thenReturn("Mozzila/5.0");
+    when(mockHttpRetrieverCriteria.gethTTPMethod())
+        .thenReturn(HttpRetrieverCriteria.HTTPMethod.GET);
 
-        URL mockURL = mock(URL.class);
-        whenNew(URL.class).withArguments(anyString()).thenReturn(mockURL);
-        HttpURLConnection mockHttpURLConnection = Mockito.mock(HttpURLConnection.class);
-        when(mockURL.openConnection()).thenReturn(mockHttpURLConnection);
+    String repsonse = new HttpRetriever(mockHttpRetrieverCriteria).retrieve(Utils::convertToString);
+    assertEquals(responseString, repsonse);
+  }
 
-        doNothing().when(mockHttpURLConnection).connect();
-        when(mockHttpURLConnection.getResponseCode()).thenReturn(202, 202, 202, 202, 202, 202);
-        when(mockHttpURLConnection.getResponseMessage()).thenReturn("Waiting...", "Still waiting...", "Bit slow today...", "Sorry about this...", "Bit embarrasing...");
+  @Test
+  public void test_response_code_202_get_retry() throws IOException, Exception {
 
-        HttpRetrieverCriteria mockHttpRetrieverCriteria = mock(HttpRetrieverCriteria.class);
-        whenNew(HttpRetrieverCriteria.class).withAnyArguments().thenReturn(mockHttpRetrieverCriteria);
-        when(mockHttpRetrieverCriteria.getUrl()).thenReturn(mockURL);
-        when(mockHttpRetrieverCriteria.getUserAgent()).thenReturn("Mozzila/5.0");
-        when(mockHttpRetrieverCriteria.gethTTPMethod()).thenReturn(HttpRetrieverCriteria.HTTPMethod.GET);
-        when(mockHttpRetrieverCriteria.getRetryLimit()).thenReturn(5);
+    URL mockURL = mock(URL.class);
+    whenNew(URL.class).withArguments(anyString()).thenReturn(mockURL);
+    HttpURLConnection mockHttpURLConnection = Mockito.mock(HttpURLConnection.class);
+    when(mockURL.openConnection()).thenReturn(mockHttpURLConnection);
 
-        String urlResponse = HttpRetriever.Factory.create().retrieve(mockHttpRetrieverCriteria);
-        assertTrue(urlResponse.isEmpty());
-    }
+    doNothing().when(mockHttpURLConnection).connect();
+    when(mockHttpURLConnection.getResponseCode()).thenReturn(202, 202, 202, 202, 202, 202);
+    when(mockHttpURLConnection.getResponseMessage())
+        .thenReturn(
+            "Waiting...",
+            "Still waiting...",
+            "Bit slow today...",
+            "Sorry about this...",
+            "Bit embarrasing...");
 
-    @Test
-    public void test_response_code_404_get() throws IOException, Exception {
+    HttpRetrieverCriteria mockHttpRetrieverCriteria = mock(HttpRetrieverCriteria.class);
 
-        URL mockURL = mock(URL.class);
-        whenNew(URL.class).withArguments(anyString()).thenReturn(mockURL);
-        HttpURLConnection mockHttpURLConnection = Mockito.mock(HttpURLConnection.class);
-        when(mockURL.openConnection()).thenReturn(mockHttpURLConnection);
+    whenNew(HttpRetrieverCriteria.class).withAnyArguments().thenReturn(mockHttpRetrieverCriteria);
+    when(mockHttpRetrieverCriteria.getUrl()).thenReturn(mockURL);
+    when(mockHttpRetrieverCriteria.getUserAgent()).thenReturn("Mozzila/5.0");
+    when(mockHttpRetrieverCriteria.gethTTPMethod())
+        .thenReturn(HttpRetrieverCriteria.HTTPMethod.GET);
+    when(mockHttpRetrieverCriteria.getRetryLimit()).thenReturn(5);
 
-        doNothing().when(mockHttpURLConnection).connect();
-        when(mockHttpURLConnection.getResponseCode()).thenReturn(404);
-        when(mockHttpURLConnection.getResponseMessage()).thenReturn("Not Found");
+    String repsonse = new HttpRetriever(mockHttpRetrieverCriteria).retrieve(Utils::convertToString);
+    assertTrue(repsonse.isEmpty());
+  }
 
-        HttpRetrieverCriteria mockHttpRetrieverCriteria = mock(HttpRetrieverCriteria.class);
-        whenNew(HttpRetrieverCriteria.class).withAnyArguments().thenReturn(mockHttpRetrieverCriteria);
-        when(mockHttpRetrieverCriteria.getUrl()).thenReturn(mockURL);
-        when(mockHttpRetrieverCriteria.getUserAgent()).thenReturn("Mozzila/5.0");
-        when(mockHttpRetrieverCriteria.gethTTPMethod()).thenReturn(HttpRetrieverCriteria.HTTPMethod.GET);
+  @Test
+  public void test_response_code_404_get() throws IOException, Exception {
 
-        HttpRetriever.Factory.create().retrieve(mockHttpRetrieverCriteria);
+    URL mockURL = mock(URL.class);
+    whenNew(URL.class).withArguments(anyString()).thenReturn(mockURL);
+    HttpURLConnection mockHttpURLConnection = Mockito.mock(HttpURLConnection.class);
+    when(mockURL.openConnection()).thenReturn(mockHttpURLConnection);
 
-    }
+    doNothing().when(mockHttpURLConnection).connect();
+    when(mockHttpURLConnection.getResponseCode()).thenReturn(404);
+    when(mockHttpURLConnection.getResponseMessage()).thenReturn("Not Found");
 
-    @Test
-    public void test_response_code_200_put() throws IOException, Exception {
+    HttpRetrieverCriteria mockHttpRetrieverCriteria = mock(HttpRetrieverCriteria.class);
 
-        String bodyContent = "{\"Version\": 1}";
-        String responseString = "{\"name\": \"Cabbage\"}";
+    whenNew(HttpRetrieverCriteria.class).withAnyArguments().thenReturn(mockHttpRetrieverCriteria);
+    when(mockHttpRetrieverCriteria.getUrl()).thenReturn(mockURL);
+    when(mockHttpRetrieverCriteria.getUserAgent()).thenReturn("Mozzila/5.0");
+    when(mockHttpRetrieverCriteria.gethTTPMethod())
+        .thenReturn(HttpRetrieverCriteria.HTTPMethod.GET);
 
-        URL mockURL = mock(URL.class);
-        whenNew(URL.class).withArguments(anyString()).thenReturn(mockURL);
-        HttpURLConnection mockHttpURLConnection = Mockito.mock(HttpURLConnection.class);
-        when(mockURL.openConnection()).thenReturn(mockHttpURLConnection);
+    new HttpRetriever(mockHttpRetrieverCriteria).retrieve();
+  }
 
-        doNothing().when(mockHttpURLConnection).connect();
-        doReturn(new ByteArrayInputStream(responseString.getBytes("UTF-8"))).when(mockHttpURLConnection).getInputStream();
-        when(mockHttpURLConnection.getResponseCode()).thenReturn(200);
-        when(mockHttpURLConnection.getResponseMessage()).thenReturn("Success");
+  @Test
+  public void test_response_code_200_put() throws IOException, Exception {
 
-        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-        when(mockHttpURLConnection.getOutputStream()).thenReturn(byteArrayOutputStream);
+    String bodyContent = "{\"Version\": 1}";
+    String responseString = "{\"name\": \"Cabbage\"}";
 
-        HttpRetrieverCriteria mockHttpRetrieverCriteria = mock(HttpRetrieverCriteria.class);
-        whenNew(HttpRetrieverCriteria.class).withAnyArguments().thenReturn(mockHttpRetrieverCriteria);
-        when(mockHttpRetrieverCriteria.getUrl()).thenReturn(mockURL);
-        when(mockHttpRetrieverCriteria.getUserAgent()).thenReturn("Mozzila/5.0");
-        when(mockHttpRetrieverCriteria.gethTTPMethod()).thenReturn(HttpRetrieverCriteria.HTTPMethod.PUT);
-        when(mockHttpRetrieverCriteria.getBodyContentType()).thenReturn(HttpRetrieverCriteria.ContentType.JSON);
-        when(mockHttpRetrieverCriteria.getBody()).thenReturn(bodyContent);
+    URL mockURL = mock(URL.class);
+    whenNew(URL.class).withArguments(anyString()).thenReturn(mockURL);
+    HttpURLConnection mockHttpURLConnection = Mockito.mock(HttpURLConnection.class);
+    when(mockURL.openConnection()).thenReturn(mockHttpURLConnection);
 
-        String urlResponse = HttpRetriever.Factory.create().retrieve(mockHttpRetrieverCriteria);
-        assertEquals(responseString, urlResponse);
+    doNothing().when(mockHttpURLConnection).connect();
+    doReturn(new ByteArrayInputStream(responseString.getBytes("UTF-8")))
+        .when(mockHttpURLConnection)
+        .getInputStream();
+    when(mockHttpURLConnection.getResponseCode()).thenReturn(200);
+    when(mockHttpURLConnection.getResponseMessage()).thenReturn("Success");
 
-    }
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    when(mockHttpURLConnection.getOutputStream()).thenReturn(byteArrayOutputStream);
 
-    @Test
-    public void test_response_code_unexpected_get() throws IOException, Exception {
+    HttpRetrieverCriteria mockHttpRetrieverCriteria = mock(HttpRetrieverCriteria.class);
 
-        URL mockURL = mock(URL.class);
-        whenNew(URL.class).withArguments(anyString()).thenReturn(mockURL);
-        HttpURLConnection mockHttpURLConnection = Mockito.mock(HttpURLConnection.class);
-        when(mockURL.openConnection()).thenReturn(mockHttpURLConnection);
+    whenNew(HttpRetrieverCriteria.class).withAnyArguments().thenReturn(mockHttpRetrieverCriteria);
+    when(mockHttpRetrieverCriteria.getUrl()).thenReturn(mockURL);
+    when(mockHttpRetrieverCriteria.getUserAgent()).thenReturn("Mozzila/5.0");
+    when(mockHttpRetrieverCriteria.gethTTPMethod())
+        .thenReturn(HttpRetrieverCriteria.HTTPMethod.PUT);
+    when(mockHttpRetrieverCriteria.getBodyContentType())
+        .thenReturn(HttpRetrieverCriteria.ContentType.JSON);
+    when(mockHttpRetrieverCriteria.getBody()).thenReturn(bodyContent);
 
-        doNothing().when(mockHttpURLConnection).connect();
-        doReturn(new ByteArrayInputStream("ERROR".getBytes("UTF-8"))).when(mockHttpURLConnection).getInputStream();
-        when(mockHttpURLConnection.getResponseCode()).thenReturn(500);
-        when(mockHttpURLConnection.getResponseMessage()).thenReturn("Well, that didn't go well did it!");
+    String repsonse = new HttpRetriever(mockHttpRetrieverCriteria).retrieve(Utils::convertToString);
+    assertEquals(responseString, repsonse);
+  }
 
-        HttpRetrieverCriteria mockHttpRetrieverCriteria = mock(HttpRetrieverCriteria.class);
-        whenNew(HttpRetrieverCriteria.class).withAnyArguments().thenReturn(mockHttpRetrieverCriteria);
-        when(mockHttpRetrieverCriteria.getUrl()).thenReturn(mockURL);
-        when(mockHttpRetrieverCriteria.getUserAgent()).thenReturn("Mozzila/5.0");
-        when(mockHttpRetrieverCriteria.gethTTPMethod()).thenReturn(HttpRetrieverCriteria.HTTPMethod.GET);
+  @Test
+  public void test_response_code_unexpected_get() throws IOException, Exception {
 
-        HttpRetriever.Factory.create().retrieve(mockHttpRetrieverCriteria);
+    URL mockURL = mock(URL.class);
+    whenNew(URL.class).withArguments(anyString()).thenReturn(mockURL);
+    HttpURLConnection mockHttpURLConnection = Mockito.mock(HttpURLConnection.class);
+    when(mockURL.openConnection()).thenReturn(mockHttpURLConnection);
 
-    }
+    doNothing().when(mockHttpURLConnection).connect();
+    doReturn(new ByteArrayInputStream("ERROR".getBytes("UTF-8")))
+        .when(mockHttpURLConnection)
+        .getInputStream();
+    when(mockHttpURLConnection.getResponseCode()).thenReturn(500);
+    when(mockHttpURLConnection.getResponseMessage())
+        .thenReturn("Well, that didn't go well did it!");
 
-    @Test(expected = RuntimeException.class)
-    public void test_url_ioexception() throws IOException, Exception {
+    HttpRetrieverCriteria mockHttpRetrieverCriteria = mock(HttpRetrieverCriteria.class);
 
-        URL mockURL = mock(URL.class);
-        whenNew(URL.class).withArguments(anyString()).thenReturn(mockURL);
-        HttpURLConnection mockHttpURLConnection = Mockito.mock(HttpURLConnection.class);
-        when(mockURL.openConnection()).thenThrow(new IOException("Couldn't open that connection!"));
+    whenNew(HttpRetrieverCriteria.class).withAnyArguments().thenReturn(mockHttpRetrieverCriteria);
+    when(mockHttpRetrieverCriteria.getUrl()).thenReturn(mockURL);
+    when(mockHttpRetrieverCriteria.getUserAgent()).thenReturn("Mozzila/5.0");
+    when(mockHttpRetrieverCriteria.gethTTPMethod())
+        .thenReturn(HttpRetrieverCriteria.HTTPMethod.GET);
 
-        HttpRetrieverCriteria mockHttpRetrieverCriteria = mock(HttpRetrieverCriteria.class);
-        whenNew(HttpRetrieverCriteria.class).withAnyArguments().thenReturn(mockHttpRetrieverCriteria);
-        when(mockHttpRetrieverCriteria.getUrl()).thenReturn(mockURL);
-        when(mockHttpRetrieverCriteria.getUserAgent()).thenReturn("Mozzila/5.0");
-        when(mockHttpRetrieverCriteria.gethTTPMethod()).thenReturn(HttpRetrieverCriteria.HTTPMethod.GET);
+    new HttpRetriever(mockHttpRetrieverCriteria).retrieve();
+  }
 
-        HttpRetriever.Factory.create().retrieve(mockHttpRetrieverCriteria);
+  @Test(expected = RuntimeException.class)
+  public void test_url_ioexception() throws IOException, Exception {
 
-        Assert.fail("Should have thrown a runtime exception.");
-    }
+    URL mockURL = mock(URL.class);
+    whenNew(URL.class).withArguments(anyString()).thenReturn(mockURL);
+    HttpURLConnection mockHttpURLConnection = Mockito.mock(HttpURLConnection.class);
+    when(mockURL.openConnection()).thenThrow(new IOException("Couldn't open that connection!"));
 
-    @Test(expected = RuntimeException.class)
-    public void test_url_unreachable() throws IOException, Exception {
+    HttpRetrieverCriteria mockHttpRetrieverCriteria = mock(HttpRetrieverCriteria.class);
 
-        URL mockURL = mock(URL.class);
-        whenNew(URL.class).withArguments(anyString()).thenReturn(mockURL);
-        HttpURLConnection mockHttpURLConnection = Mockito.mock(HttpURLConnection.class);
-        when(mockURL.openConnection()).thenThrow(new UnknownHostException("Couldn't open that connection!"));
+    whenNew(HttpRetrieverCriteria.class).withAnyArguments().thenReturn(mockHttpRetrieverCriteria);
+    when(mockHttpRetrieverCriteria.getUrl()).thenReturn(mockURL);
+    when(mockHttpRetrieverCriteria.getUserAgent()).thenReturn("Mozzila/5.0");
+    when(mockHttpRetrieverCriteria.gethTTPMethod())
+        .thenReturn(HttpRetrieverCriteria.HTTPMethod.GET);
 
-        HttpRetrieverCriteria mockHttpRetrieverCriteria = mock(HttpRetrieverCriteria.class);
-        whenNew(HttpRetrieverCriteria.class).withAnyArguments().thenReturn(mockHttpRetrieverCriteria);
-        when(mockHttpRetrieverCriteria.getUrl()).thenReturn(mockURL);
-        when(mockHttpRetrieverCriteria.getUserAgent()).thenReturn("Mozzila/5.0");
-        when(mockHttpRetrieverCriteria.gethTTPMethod()).thenReturn(HttpRetrieverCriteria.HTTPMethod.GET);
+    new HttpRetriever(mockHttpRetrieverCriteria).retrieve();
 
-        HttpRetriever.Factory.create().retrieve(mockHttpRetrieverCriteria);
+    Assert.fail("Should have thrown a runtime exception.");
+  }
 
-        Assert.fail("Should have thrown a runtime exception.");
-    }
+  @Test(expected = RuntimeException.class)
+  public void test_url_unreachable() throws IOException, Exception {
+
+    URL mockURL = mock(URL.class);
+    whenNew(URL.class).withArguments(anyString()).thenReturn(mockURL);
+    HttpURLConnection mockHttpURLConnection = Mockito.mock(HttpURLConnection.class);
+    when(mockURL.openConnection())
+        .thenThrow(new UnknownHostException("Couldn't open that connection!"));
+
+    HttpRetrieverCriteria mockHttpRetrieverCriteria = mock(HttpRetrieverCriteria.class);
+
+    whenNew(HttpRetrieverCriteria.class).withAnyArguments().thenReturn(mockHttpRetrieverCriteria);
+    when(mockHttpRetrieverCriteria.getUrl()).thenReturn(mockURL);
+    when(mockHttpRetrieverCriteria.getUserAgent()).thenReturn("Mozzila/5.0");
+    when(mockHttpRetrieverCriteria.gethTTPMethod())
+        .thenReturn(HttpRetrieverCriteria.HTTPMethod.GET);
+
+    new HttpRetriever(mockHttpRetrieverCriteria).retrieve();
+
+    Assert.fail("Should have thrown a runtime exception.");
+  }
 }

@@ -16,158 +16,154 @@
 
 package com.fluffyluffs.httpretriever4j.impl;
 
-import com.fluffyluffs.httpretriever4j.HttpRetriever;
 import com.fluffyluffs.httpretriever4j.HttpRetrieverCriteria;
 import com.fluffyluffs.httpretriever4j.HttpRetrieverCriteria.ContentType;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.net.HttpURLConnection;
-import java.net.URL;
-import java.net.UnknownHostException;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-public class HttpRetrieverImpl implements HttpRetriever<HttpRetrieverCriteria> {
+public class HttpRetrieverImpl {
 
-  private static final Logger LOGGER = LogManager.getLogger(HttpRetrieverImpl.class);
+  private static final Logger LOGGER = Logger.getLogger(HttpRetrieverImpl.class.getName());
+
   private static final String AUTH = "Authorization";
   private static final String USER_AGENT = "User-Agent";
   private static final String ACCEPT = "Accept";
   private static final String CACHE_CONTROL = "Cache-Control";
   private static final String CONTENT_TYPE = "Content-Type";
+  private final HttpRetrieverCriteria httpRetrieverCriteria;
 
-  @Override
-  public String retrieve(HttpRetrieverCriteria criteria) {
-    StringBuilder response = new StringBuilder();
+  public HttpRetrieverImpl(HttpRetrieverCriteria httpRetrieverCriteria) {
+    this.httpRetrieverCriteria = httpRetrieverCriteria;
+  }
+
+  public InputStream retrieve() {
+    InputStream in = null;
     int retryCounter = 0;
     boolean success = false;
     do {
       retryCounter++;
+      HttpURLConnection connection = getHttpURLConnection();
+
       try {
-        URL url = criteria.getUrl();
-        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-
-        try {
-          connection.addRequestProperty(
-              AUTH,
-              Optional.ofNullable(criteria.getAuthorization())
-                  .map(auth -> String.valueOf(auth))
-                  .orElse(null));
-          connection.setRequestProperty(USER_AGENT, criteria.getUserAgent());
-          connection.setRequestProperty(
-              ACCEPT,
-              Optional.ofNullable(criteria.getAcceptContentType())
-                  .map(ContentType::getContentType)
-                  .orElse(null));
-          connection.setRequestProperty(CACHE_CONTROL, "no-cache");
-          connection.setRequestMethod(criteria.gethTTPMethod().name());
-          connection.setConnectTimeout(Long.valueOf(TimeUnit.SECONDS.toMillis(5)).intValue());
-          connection.setReadTimeout(Long.valueOf(TimeUnit.MINUTES.toMillis(1)).intValue());
-          connection.setUseCaches(false);
-
-          Optional.ofNullable(criteria.getBodyContentType())
-              .ifPresent(
-                  contentType -> {
-                    connection.setRequestProperty(CONTENT_TYPE, contentType.getContentType());
-                  });
-          Optional.ofNullable(criteria.getBody()).ifPresent(body -> writeBody(connection, body));
-
-          criteria
-              .getHeaders()
-              .forEach(
-                  header -> {
-                    String headerType =
-                        Optional.ofNullable(header.getType())
-                            .orElseThrow(
-                                () -> new NoSuchElementException("Header type cannot be null"));
-                    String headerString =
-                        Optional.ofNullable(header.getHeader())
-                            .orElseThrow(() -> new NoSuchElementException("Header cannot be null"));
-
-                    connection.setRequestProperty(headerType, headerString);
-                  });
-
-          connection.connect();
-
-          switch (connection.getResponseCode()) {
-            case 200:
-            case 201:
-              try (BufferedReader in =
-                  new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-                String outputString;
-                while ((outputString = in.readLine()) != null) {
-                  response.append(outputString);
-                }
-              }
+        String url = httpRetrieverCriteria.getUrl().toExternalForm();
+        switch (connection.getResponseCode()) {
+          case 200:
+          case 201:
+            in = connection.getInputStream();
+            success = true;
+            break;
+          case 204:
+            LOGGER.log(Level.INFO, "Completed: {0}", connection.getResponseCode());
+            success = true;
+            break;
+          case 202:
+            int retryLimit = httpRetrieverCriteria.getRetryLimit();
+            if (retryCounter == retryLimit) {
+              LOGGER.log(
+                  Level.WARNING,
+                  "Reached retry limit of {0} for {1}, aborting.",
+                  new Object[] {retryLimit, url});
               success = true;
+            }
 
-              break;
-            case 204:
-              LOGGER.atInfo().log("Completed: {}", connection.getResponseCode());
-              success = true;
+            LOGGER.log(
+                Level.INFO,
+                "Status {0}:{1}, resubmitting {0}.",
+                new Object[] {connection.getResponseCode(), connection.getResponseMessage(), url});
 
-              break;
-            case 202:
-              int retryLimit = criteria.getRetryLimit();
-              if (retryCounter == retryLimit) {
-                LOGGER.atWarn().log("Reached retry limit of {} for {}, aborting.", retryLimit, url);
-                success = true;
-              }
-              LOGGER.atInfo().log(
-                  "Status {}:{}, resubmitting {}.",
-                  connection.getResponseCode(),
-                  connection.getResponseMessage(),
-                  url);
+            break;
+          case 404:
+            success = true;
+            LOGGER.log(
+                Level.WARNING,
+                "Status {0} for {1}:{0} - will not be reattempted.",
+                new Object[] {url, connection.getResponseCode(), connection.getResponseMessage()});
 
-              break;
-            case 404:
-              success = true;
-              LOGGER
-                  .atError()
-                  .log(
-                      "Status {} for {}:{} - will not be reattempted.",
-                      url,
-                      connection.getResponseCode(),
-                      connection.getResponseMessage());
+            break;
+          default:
+            in = connection.getInputStream();
+            success = true;
 
-              break;
-            default:
-              success = true;
-              try (BufferedReader in =
-                  new BufferedReader(new InputStreamReader(connection.getInputStream()))) {
-                String outputString;
-                while ((outputString = in.readLine()) != null) {
-                  response.append(outputString);
-                }
-              }
-              LOGGER.atInfo().log(
-                  "Connection to {} returned an unhandled {}:{} and response body {} - will not be reattempted.",
-                  url,
-                  connection.getResponseCode(),
-                  connection.getResponseMessage(),
-                  response.toString());
-          }
-        } catch (UnknownHostException ex) {
-          success = true;
-          LOGGER.atError().log(ex.getMessage(), ex);
-          throw new RuntimeException(ex);
-        } finally {
-          connection.disconnect();
+            LOGGER.log(
+                Level.WARNING,
+                "Connection to {0} returned an unhandled {1}:{2} - will not be reattempted.",
+                new Object[] {
+                  url, connection.getResponseCode(), connection.getResponseMessage(),
+                });
         }
       } catch (IOException ex) {
         success = true;
-        LOGGER.atError().log(ex.getMessage(), ex);
+        LOGGER.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
         throw new RuntimeException(ex);
+      } finally {
+        connection.disconnect();
       }
 
     } while (!success);
 
-    return response.toString();
+    return in;
+  }
+
+  private HttpURLConnection getHttpURLConnection() {
+
+    try {
+
+      HttpURLConnection connection =
+          (HttpURLConnection) httpRetrieverCriteria.getUrl().openConnection();
+      connection.addRequestProperty(
+          AUTH,
+          Optional.ofNullable(httpRetrieverCriteria.getAuthorization())
+              .map(auth -> String.valueOf(auth))
+              .orElse(null));
+      connection.setRequestProperty(USER_AGENT, httpRetrieverCriteria.getUserAgent());
+      connection.setRequestProperty(
+          ACCEPT,
+          Optional.ofNullable(httpRetrieverCriteria.getAcceptContentType())
+              .map(ContentType::getContentType)
+              .orElse(null));
+      connection.setRequestProperty(CACHE_CONTROL, "no-cache");
+      connection.setRequestMethod(httpRetrieverCriteria.gethTTPMethod().name());
+      connection.setConnectTimeout(Long.valueOf(TimeUnit.SECONDS.toMillis(5)).intValue());
+      connection.setReadTimeout(Long.valueOf(TimeUnit.MINUTES.toMillis(1)).intValue());
+      connection.setUseCaches(false);
+
+      Optional.ofNullable(httpRetrieverCriteria.getBodyContentType())
+          .ifPresent(
+              contentType -> {
+                connection.setRequestProperty(CONTENT_TYPE, contentType.getContentType());
+              });
+      Optional.ofNullable(httpRetrieverCriteria.getBody())
+          .ifPresent(body -> writeBody(connection, body));
+
+      httpRetrieverCriteria
+          .getHeaders()
+          .forEach(
+              header -> {
+                String headerType =
+                    Optional.ofNullable(header.getType())
+                        .orElseThrow(
+                            () -> new NoSuchElementException("Header type cannot be null"));
+                String headerString =
+                    Optional.ofNullable(header.getHeader())
+                        .orElseThrow(() -> new NoSuchElementException("Header cannot be null"));
+
+                connection.setRequestProperty(headerType, headerString);
+              });
+
+      connection.connect();
+
+      return connection;
+    } catch (IOException ex) {
+      LOGGER.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+      throw new RuntimeException(ex);
+    }
   }
 
   private void writeBody(HttpURLConnection secureConnection, String body) {

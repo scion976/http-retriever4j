@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 /** HTTP Retriever Criteria */
 public class HttpRetrieverCriteria {
 
-  private final URL url;
+  private final String url;
   private final HTTPMethod hTTPMethod;
   private final String body;
   private final ContentType bodyContentType;
@@ -48,22 +48,20 @@ public class HttpRetrieverCriteria {
     this.retryLimit = httpRetrieverCriteriaBuilder.retryLimit;
     this.headers = httpRetrieverCriteriaBuilder.headers;
     this.queryParameters = httpRetrieverCriteriaBuilder.queryParameters;
-    
-    try {
-      String urlWithParams = httpRetrieverCriteriaBuilder.url
-              .concat(
-                      queryParameters.stream()
-                      .map(queryParameter -> queryParameter.getField() + "=" + queryParameter.getValue())
-                      .collect(Collectors.collectingAndThen(
-                              Collectors.joining("&"),
-                              params -> ((params.isBlank() || httpRetrieverCriteriaBuilder.url.contains("?")) ? "" : "?").concat(params)))
-              );
-      this.url = new URL(urlWithParams);
-    } catch (MalformedURLException murlex) {
-      throw new RuntimeException(murlex);
-    }
 
-    
+    String urlWithParams =
+        httpRetrieverCriteriaBuilder.url.concat(
+            queryParameters.stream()
+                .map(queryParameter -> queryParameter.getField() + "=" + queryParameter.getValue())
+                .collect(
+                    Collectors.collectingAndThen(
+                        Collectors.joining("&"),
+                        params ->
+                            ((params.isBlank() || httpRetrieverCriteriaBuilder.url.contains("?"))
+                                    ? ""
+                                    : "?")
+                                .concat(params))));
+    this.url = urlWithParams;
   }
 
   /**
@@ -79,9 +77,10 @@ public class HttpRetrieverCriteria {
    * Get URL
    *
    * @return {@link URL}
+   * @throws java.net.MalformedURLException
    */
-  public URL getUrl() {
-    return url;
+  public URL getUrl() throws MalformedURLException {
+    return new URL(url);
   }
 
   /**
@@ -149,14 +148,13 @@ public class HttpRetrieverCriteria {
 
   /**
    * Get the Query Parameters to apply
+   *
    * @return List of {@link QueryParameter}
    */
   public List<QueryParameter> getQueryParameters() {
     return queryParameters;
   }
 
-  
-  
   /** HTTP Retriever Criteria Builder */
   public static class HttpRetrieverCriteriaBuilder {
 
@@ -196,7 +194,7 @@ public class HttpRetrieverCriteria {
       this.url = url;
       return this;
     }
-    
+
     /**
      * Set HTTP Method
      *
@@ -225,10 +223,10 @@ public class HttpRetrieverCriteria {
     }
 
     public HttpRetrieverCriteriaBuilder setQueryParameter(QueryParameter queryParameter) {
-        queryParameters.add(queryParameter);
-        return this;
+      queryParameters.add(queryParameter);
+      return this;
     }
-    
+
     /**
      * Set Accepted Content Type
      *
@@ -278,7 +276,8 @@ public class HttpRetrieverCriteria {
       validate(hTTPMethod, "HTTP Method GET, POST etc");
       validate(userAgent, "Mozilla/5.0 etc");
       queryParameters.stream()
-              .forEach(queryParameter -> validate(queryParameter.getValue(), queryParameter.getField()));
+          .forEach(
+              queryParameter -> validate(queryParameter.getValue(), queryParameter.getField()));
 
       return new HttpRetrieverCriteria(this);
     }

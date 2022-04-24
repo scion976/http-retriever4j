@@ -17,19 +17,41 @@
 package com.fluffyluffs.httpretriever4j;
 
 import com.fluffyluffs.httpretriever4j.impl.HttpRetrieverImpl;
+import java.io.InputStream;
+import java.util.function.Function;
 
-public interface HttpRetriever<T extends HttpRetrieverCriteria> {
-    
-    /**
-     * Retrieve HTTP response from endpoint
-     * @param criteria extends {@link HttpRetrieverCriteria}
-     * @return String response from endpoint
-     */
-    public String retrieve(T criteria);
-    
-    class Factory {
-        public static HttpRetriever create() {
-            return new HttpRetrieverImpl();
-        }
-    }
+public class HttpRetriever {
+
+  private final HttpRetrieverCriteria httpRetrieverCriteria;
+
+  /**
+   * HttpRetriever
+   *
+   * @param httpRetrieverCriteria extends {@link HttpRetrieverCriteria}
+   */
+  public HttpRetriever(HttpRetrieverCriteria httpRetrieverCriteria) {
+    this.httpRetrieverCriteria = httpRetrieverCriteria;
+  }
+
+  /**
+   * Retrieve
+   *
+   * @return InputStream
+   */
+  public InputStream retrieve() {
+
+    return new HttpRetrieverImpl(httpRetrieverCriteria).retrieve();
+  }
+
+  /**
+   * Retrieve
+   *
+   * @param <T> response type
+   * @param responseFunction response function
+   * @return T
+   */
+  public <T> T retrieve(Function<InputStream, T> responseFunction) {
+
+    return responseFunction.apply(new HttpRetrieverImpl(httpRetrieverCriteria).retrieve());
+  }
 }
