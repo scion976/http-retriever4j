@@ -18,6 +18,7 @@ package com.fluffyluffs.httpretriever4j.impl;
 
 import com.fluffyluffs.httpretriever4j.HttpRetrieverCriteria;
 import com.fluffyluffs.httpretriever4j.HttpRetrieverCriteria.ContentType;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
@@ -37,6 +38,9 @@ public class HttpRetrieverImpl {
   private static final String ACCEPT = "Accept";
   private static final String CACHE_CONTROL = "Cache-Control";
   private static final String CONTENT_TYPE = "Content-Type";
+
+  private static boolean success;
+
   private final HttpRetrieverCriteria httpRetrieverCriteria;
 
   public HttpRetrieverImpl(HttpRetrieverCriteria httpRetrieverCriteria) {
@@ -44,71 +48,33 @@ public class HttpRetrieverImpl {
   }
 
   public InputStream retrieve() {
-    InputStream in = null;
-    int retryCounter = 0;
-    boolean success = false;
-    do {
-      retryCounter++;
-      HttpURLConnection connection = getHttpURLConnection();
 
-      try {
-        String url = httpRetrieverCriteria.getUrl().toExternalForm();
-        switch (connection.getResponseCode()) {
-          case 200:
-          case 201:
-            in = connection.getInputStream();
-            success = true;
-            break;
-          case 204:
-            LOGGER.log(Level.INFO, "Completed: {0}", connection.getResponseCode());
-            success = true;
-            break;
-          case 202:
-            int retryLimit = httpRetrieverCriteria.getRetryLimit();
-            if (retryCounter == retryLimit) {
-              LOGGER.log(
-                  Level.WARNING,
-                  "Reached retry limit of {0} for {1}, aborting.",
-                  new Object[] {retryLimit, url});
-              success = true;
-            }
+    HttpURLConnection connection = getHttpURLConnection();
 
-            LOGGER.log(
-                Level.INFO,
-                "Status {0}:{1}, resubmitting {0}.",
-                new Object[] {connection.getResponseCode(), connection.getResponseMessage(), url});
+    try {
+      Response response =
+          Response.of(connection.getResponseCode()).orElse(Response.HTTP_INTERNAL_ERROR);
+      success = response.hasStatus();
 
-            break;
-          case 404:
-            success = true;
-            LOGGER.log(
-                Level.WARNING,
-                "Status {0} for {1}:{0} - will not be reattempted.",
-                new Object[] {url, connection.getResponseCode(), connection.getResponseMessage()});
-
-            break;
-          default:
-            in = connection.getInputStream();
-            success = true;
-
-            LOGGER.log(
-                Level.WARNING,
-                "Connection to {0} returned an unhandled {1}:{2} - will not be reattempted.",
-                new Object[] {
-                  url, connection.getResponseCode(), connection.getResponseMessage(),
-                });
-        }
-      } catch (IOException ex) {
-        success = true;
-        LOGGER.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
-        throw new RuntimeException(ex);
-      } finally {
-        connection.disconnect();
+      if (success) {
+        log(response, Level.INFO);
+        return new ByteArrayInputStream(connection.getInputStream().readAllBytes());
       }
 
-    } while (!success);
+      log(response, Level.WARNING);
+      return InputStream.nullInputStream();
 
-    return in;
+    } catch (IOException ex) {
+      LOGGER.log(Level.SEVERE, ex.getLocalizedMessage(), ex);
+      throw new RuntimeException(ex);
+    } finally {
+      connection.disconnect();
+    }
+  }
+
+  private void log(Response response, Level level) {
+    LOGGER.log(
+        level, "Recieved {0}:{1}", new Object[] {response.name(), response.getReponseCode()});
   }
 
   private HttpURLConnection getHttpURLConnection() {

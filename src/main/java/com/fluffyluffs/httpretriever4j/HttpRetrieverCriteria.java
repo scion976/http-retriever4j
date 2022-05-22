@@ -36,7 +36,6 @@ public class HttpRetrieverCriteria {
   private final List<QueryParameter> queryParameters;
   private final char[] authorization;
   private final String userAgent;
-  private final int retryLimit;
 
   private HttpRetrieverCriteria(HttpRetrieverCriteriaBuilder httpRetrieverCriteriaBuilder) {
     this.authorization = httpRetrieverCriteriaBuilder.authorization;
@@ -45,7 +44,6 @@ public class HttpRetrieverCriteria {
     this.bodyContentType = httpRetrieverCriteriaBuilder.bodyContentType;
     this.acceptContentType = httpRetrieverCriteriaBuilder.acceptContentType;
     this.userAgent = httpRetrieverCriteriaBuilder.userAgent;
-    this.retryLimit = httpRetrieverCriteriaBuilder.retryLimit;
     this.headers = httpRetrieverCriteriaBuilder.headers;
     this.queryParameters = httpRetrieverCriteriaBuilder.queryParameters;
 
@@ -129,15 +127,6 @@ public class HttpRetrieverCriteria {
   }
 
   /**
-   * Get the maximum number of times a request will be attempted
-   *
-   * @return {@link int}
-   */
-  public int getRetryLimit() {
-    return retryLimit;
-  }
-
-  /**
    * Get the Headers to apply
    *
    * @return List of {@link Header}
@@ -165,7 +154,6 @@ public class HttpRetrieverCriteria {
     private ContentType bodyContentType;
     private ContentType acceptContentType;
     private String userAgent;
-    private int retryLimit = 5;
     private List<Header> headers = new ArrayList<>();
     private List<QueryParameter> queryParameters = new ArrayList<>();
 
@@ -260,11 +248,6 @@ public class HttpRetrieverCriteria {
       return this;
     }
 
-    public HttpRetrieverCriteriaBuilder setRetryLimit(int retryLimit) {
-      this.retryLimit = retryLimit;
-      return this;
-    }
-
     /**
      * Build {@link HttpRetrieverCriteria}. May throw {@link NoSuchElementException} where a
      * required element is missing.
@@ -291,6 +274,8 @@ public class HttpRetrieverCriteria {
 
   public enum ContentType {
     JSON("application/json;charset=UTF-8"),
+    PNG("image/png"),
+    
     TEXT("text/html; charset=UTF-8"),
     XML("application/xml; charset=UTF-8");
 

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.fluffy.luffs.httpretriever4j.test;
+package com.fluffyluffs.httpretriever4j.test;
 
 import com.fluffyluffs.httpretriever4j.HttpRetriever;
 import com.fluffyluffs.httpretriever4j.HttpRetrieverCriteria;
@@ -105,65 +105,6 @@ public class TestHttpRetriverImpl {
 
     String repsonse = new HttpRetriever(mockHttpRetrieverCriteria).retrieve(Utils::convertToString);
     assertEquals(responseString, repsonse);
-  }
-
-  @Test
-  public void test_response_code_202_get() throws IOException, Exception {
-
-    String responseString = "{\"name\": \"Cabbage\"}";
-
-    URL mockURL = mock(URL.class);
-    whenNew(URL.class).withArguments(anyString()).thenReturn(mockURL);
-    HttpURLConnection mockHttpURLConnection = Mockito.mock(HttpURLConnection.class);
-    when(mockURL.openConnection()).thenReturn(mockHttpURLConnection);
-
-    doNothing().when(mockHttpURLConnection).connect();
-    when(mockHttpURLConnection.getResponseCode()).thenReturn(202, 202, 200);
-    doReturn(new ByteArrayInputStream(responseString.getBytes("UTF-8")))
-        .when(mockHttpURLConnection)
-        .getInputStream();
-
-    HttpRetrieverCriteria mockHttpRetrieverCriteria = mock(HttpRetrieverCriteria.class);
-
-    whenNew(HttpRetrieverCriteria.class).withAnyArguments().thenReturn(mockHttpRetrieverCriteria);
-    when(mockHttpRetrieverCriteria.getUrl()).thenReturn(mockURL);
-    when(mockHttpRetrieverCriteria.getUserAgent()).thenReturn("Mozzila/5.0");
-    when(mockHttpRetrieverCriteria.gethTTPMethod())
-        .thenReturn(HttpRetrieverCriteria.HTTPMethod.GET);
-
-    String repsonse = new HttpRetriever(mockHttpRetrieverCriteria).retrieve(Utils::convertToString);
-    assertEquals(responseString, repsonse);
-  }
-
-  @Test
-  public void test_response_code_202_get_retry() throws IOException, Exception {
-
-    URL mockURL = mock(URL.class);
-    whenNew(URL.class).withArguments(anyString()).thenReturn(mockURL);
-    HttpURLConnection mockHttpURLConnection = Mockito.mock(HttpURLConnection.class);
-    when(mockURL.openConnection()).thenReturn(mockHttpURLConnection);
-
-    doNothing().when(mockHttpURLConnection).connect();
-    when(mockHttpURLConnection.getResponseCode()).thenReturn(202, 202, 202, 202, 202, 202);
-    when(mockHttpURLConnection.getResponseMessage())
-        .thenReturn(
-            "Waiting...",
-            "Still waiting...",
-            "Bit slow today...",
-            "Sorry about this...",
-            "Bit embarrasing...");
-
-    HttpRetrieverCriteria mockHttpRetrieverCriteria = mock(HttpRetrieverCriteria.class);
-
-    whenNew(HttpRetrieverCriteria.class).withAnyArguments().thenReturn(mockHttpRetrieverCriteria);
-    when(mockHttpRetrieverCriteria.getUrl()).thenReturn(mockURL);
-    when(mockHttpRetrieverCriteria.getUserAgent()).thenReturn("Mozzila/5.0");
-    when(mockHttpRetrieverCriteria.gethTTPMethod())
-        .thenReturn(HttpRetrieverCriteria.HTTPMethod.GET);
-    when(mockHttpRetrieverCriteria.getRetryLimit()).thenReturn(5);
-
-    String repsonse = new HttpRetriever(mockHttpRetrieverCriteria).retrieve(Utils::convertToString);
-    assertTrue(repsonse.isEmpty());
   }
 
   @Test
